@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="login" name="login" style="display: flex; flex-direction: column; justify-content: center; position: relative;">
+    {% if error == True %}
+      <div class="notif" style="visibility: visible; opacity: 1; transform: translateY(0);">{{msg}}</div>
+    {% endif %}
+    <h2>Sign In</h2>
+        <form method="POST">
+        <div class="form-group">
+            <label for="loginEmail">Email</label>
+            <input type="email" name="email" placeholder="Enter your email" style="font-family: Inter;">
+        </div>
+        <div class="form-group">
+            <label for="loginPassword">Password</label>
+            <input type="password" name="password" placeholder="Enter your password" style="font-family: Inter;">
+        </div>
+        <button type="submit" class="submit-btn" style="font-family: inter;">Sign In</button>
+        </form>
+        <p>Don’t have an account? <a href="{{ url_for('register') }}">Register</a></p>
+  </div>
+</body>
+</html>

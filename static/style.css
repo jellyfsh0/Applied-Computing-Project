@@ -1,0 +1,233 @@
+body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #f0fcf9, #e9fbe9);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px;
+    }
+
+.card, .profile, .edit-profile, .login, .register {
+  width: 402px;
+  height: 837px;
+  background: #fff;
+  border-radius: 25px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  padding: 20px;
+}
+.profile p {
+  text-align: left;
+  font-size: 20px;
+}
+.profile a, .login a, .register a {
+  color: #45a049;
+}
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  font-size: 24px;
+  font-weight: 600;
+}
+.header-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.settings-btn, .back-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  background: #4CAF50;
+  color: #fff;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+.settings-btn:hover, .back-btn:hover {
+  background: #45a049;
+}
+.settings-btn svg, .back-btn svg {
+  width: 24px;
+  height: 24px;
+  fill: white;
+}
+.efficiency {
+  margin-bottom: 20px;
+  background: #e9fbe9;
+  border-radius: 12px;
+  padding: 15px;
+  font-size: 18px;
+  font-weight: 500;
+  border: 1px solid #cdeccd;
+}
+.efficiency h2 {
+  margin: 0 0 10px 0;
+  font-size: 50px;
+  font-weight: 700;
+}
+.progress {
+  width: 100%;
+  height: 10px;
+  background: #cdeccd;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.progress-bar {
+  height: 100%;
+  background: #4CAF50;
+}
+.profile .tiles {
+  display: flex;
+  flex-direction: column;
+}
+.profile .tile {
+  display: block;
+  height: auto;
+  justify-content: center;
+}
+.tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+.tile {
+  background: #e9fbe9;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 15px;
+  border: 1px solid #cdeccd;
+  height: 250px;
+}
+.tile span {
+  font-size: 20px;
+  color: #333;
+}
+.tile-value {
+  font-size: 60px;
+  font-weight: 700;
+  align-self: flex-start;
+  text-align: left;
+}
+/* Profile / Edit / Login / Register */
+.profile, .edit-profile, .login, .register {
+  text-align: center;
+}
+.profile-pic {
+  width: 250px;
+  height: 250px;
+  border-radius: 50%;
+  background-size: cover;
+  margin: 0 auto 10px auto;
+}
+.profile h2 {
+  margin-bottom: 20px;
+  font-size: 35px;
+  font-weight: 700;
+}
+.profile-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.section {
+  background: #f4fff4;
+  padding: 15px;
+  border: 1px solid #d8f0d8;
+  border-radius: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-size: 20px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+}
+.section:hover {
+  background: #e2f7e2;
+}
+.edit-profile h2, .login h2, .register h2, .profile h2{
+  font-size: 30px;
+  margin-bottom: 20px;
+  font-weight: 700;
+}
+.form-group {
+  margin-bottom: 15px;
+  text-align: left;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+.form-group input {
+  padding: 15px;
+  border-radius: 12px;
+  border: 1px solid #cdeccd;
+  background: #f9fff9;
+  font-size: 20px;
+  width: 100%;
+  height: 60px;
+  box-sizing: border-box;
+  transition: all 0.2s;
+  font-family: Inter;
+}
+.form-group input:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+}
+.save-btn, .submit-btn {
+  background: linear-gradient(90deg, #4CAF50, #45a049);
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 18px;
+  margin-top: 20px;
+  width: 100%;
+  height: 60px;
+  font-weight: 600;
+  transition: background 0.2s;
+  font-family: inter;
+}
+.save-btn:hover, .submit-btn:hover {
+  background: linear-gradient(90deg, #45a049, #4CAF50);
+}
+.alt-link {
+  margin-top: 20px;
+  font-size: 16px;
+  color: #555;
+}
+.alt-link span {
+  color: #4CAF50;
+  cursor: pointer;
+}
+.notif {
+  visibility: hidden;
+  height: auto;
+  display: flex;
+  background-color: #FFC7CE;
+  border: 1px solid #9C0006;
+  color: #9C0006;
+  text-align: center;
+  align-items: center;
+  border-radius: 20px;
+  padding: 20px;
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  left: 20px;
+  z-index: 1000;
+  font-family: Inter;
+  font-size: 20px;
+  opacity: 0;
+}
