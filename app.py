@@ -41,8 +41,6 @@ def get_weather(latitude, longitude, panel_area=1.6):
     temperature = current.get('temperature_2m')
     weather_code = current.get('weather_code')
     irradiance = current.get('shortwave_radiation')
-    tim = current.get('time')
-    time = datetime.fromisoformat(tim)
 
     # Weather codes
     weather_codes = {
@@ -68,10 +66,10 @@ def get_weather(latitude, longitude, panel_area=1.6):
 
     condition = weather_codes.get(weather_code, "Unknown")
     max_output = 4000
-    hour_now = time.hour
+    hour = datetime.now().hour
 
-    if 6 <= hour_now <= 18:
-        time_factor = max(0, 1 - (hour_now ** 2) / 36)
+    if 6 <= hour <= 18:
+        time_factor = max(0, 1 - ((hour - 12) ** 2) / 36)
     else:
         time_factor = 0
 
@@ -112,8 +110,9 @@ def get_weather(latitude, longitude, panel_area=1.6):
         efficiency = int(efficiency)
     else:
         efficiency = 0
+    
 
-    return temperature, condition, efficiency, round(hour_now, 1)
+    return temperature, condition, efficiency, hour
 
 
 
