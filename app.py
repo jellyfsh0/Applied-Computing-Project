@@ -15,22 +15,23 @@ if not os.path.exists(UPLOAD_FOLDER):
 
 # Initialize Flask app and configuration
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///solar.db'  # SQLite database
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///solar.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'supersecretkey'  # Secret key for session management
+app.config['SECRET_KEY'] = 'supersecretkey'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # Max upload size: 16MB
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
 # Initialize database
 db = SQLAlchemy(app)
 
-# Function to find weather data from API
-def get_weather(latitude, longitude, panel_area=1.6):
+# Function to find weather data from Open-Meteo API and calculates solar panel output, efficiency, etc.
+def get_weather(latitude, longitude, panel_area=1.6, panel_efficiency=0.20):
     url = "https://api.open-meteo.com/v1/forecast"
     params = {
         "latitude": latitude,
         "longitude": longitude,
         "current": "temperature_2m,weather_code,shortwave_radiation",
+        "timezone": "auto"
     }
 
     response = requests.get(url, params=params)
@@ -40,7 +41,8 @@ def get_weather(latitude, longitude, panel_area=1.6):
     current = data.get("current", {})
     temperature = current.get('temperature_2m')
     weather_code = current.get('weather_code')
-    irradiance = current.get('shortwave_radiation')
+    timenow = current.get('time')
+    time = datetime.fromisoformat(str(timenow))
 
     # Weather codes
     weather_codes = {
@@ -66,10 +68,10 @@ def get_weather(latitude, longitude, panel_area=1.6):
 
     condition = weather_codes.get(weather_code, "Unknown")
     max_output = 4000
-    hour = datetime.now().hour
+    hour = time.hour
 
     if 6 <= hour <= 18:
-        time_factor = max(0, 1 - ((hour - 12) ** 2) / 36)
+        time_factor = max(0, 1 - ((hour - 12) ** 2) / 49)
     else:
         time_factor = 0
 
@@ -104,24 +106,29 @@ def get_weather(latitude, longitude, panel_area=1.6):
     weather_factor = weather_factors.get(weather_code, 1.0)
     noise = random.uniform(0.95, 1.05)
     output = max_output * time_factor * weather_factor * noise
+    irradiance = 2000 * time_factor * weather_factor
 
     if irradiance and irradiance > 0:
-        efficiency = (output / (irradiance * panel_area)) * 100
-        efficiency = int(efficiency)
+        theoretical_power = irradiance * panel_area * panel_efficiency
+        efficiency = (output / theoretical_power) * 100
+        efficiency = min(efficiency, 100)
     else:
         efficiency = 0
-    
 
-    return temperature, condition, efficiency, hour
+    co2_saved = (output / 1000) * 0.85
+
+    uptime = "Active" if output > 10 else "Idle"
+
+    return temperature, condition, efficiency, int(output), int(co2_saved), uptime
 
 
-
+# Database model for User
 class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)  # Unique user ID
-    name = db.Column(db.String(100))              # User's name
-    email = db.Column(db.String(100), unique=True)  # User's unique email
-    password = db.Column(db.String(200))          # Hashed password
-    file = db.Column(db.String(200), default='default.png')  # Profile picture filename
+    id = db.Column(db.Integer, primary_key=True)  
+    name = db.Column(db.String(100))              
+    email = db.Column(db.String(100), unique=True)  
+    password = db.Column(db.String(200))          
+    file = db.Column(db.String(200), default='default.png')  
 
 # Create all database tables
 with app.app_context():
@@ -134,7 +141,7 @@ def home():
         return redirect(url_for('dashboard'))
     return redirect(url_for('login'))
 
-# Register page
+# Register page, asks for name, email, password, confirm password and creates new user
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     msg = ""
@@ -161,7 +168,7 @@ def register():
 
     return render_template('register.html', msg=msg)
 
-# Login page
+# Login page, asks for email and password, validates user and creates session
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     error = None
@@ -171,7 +178,7 @@ def login():
         email = request.form.get('email')
         password = request.form.get('password')
         user = User.query.filter_by(email=email).first()
-        if not user or not check_password_hash(user.password, password): # Validate user credentials
+        if not user or not check_password_hash(user.password, password):
             error = True
             msg = "Invalid email or password. Please try again."
             return render_template('login.html', error=error, msg=msg)
@@ -185,17 +192,18 @@ def login():
 # Logout route, clears user session and redirects to login
 @app.route('/logout')
 def logout():
-    session.clear()  # Clears the user's session
+    session.clear()
     return redirect(url_for('login'))
 
+# Error handler for file too large
 @app.errorhandler(413)
-def handle_file_too_large(error):  # Handle file too large error
+def handle_file_too_large(error):
     return "File is too large!", 413
 
-# Dashboard page
+# Dashboard page, shows weather data and solar panel output, efficiency, etc.
 @app.route('/dashboard')
 def dashboard():
-    temp, condition, efficiency, output = get_weather(-37.75, 145.03)
+    temp, condition, efficiency, output, co2Saved, uptimePercentage = get_weather(-37.75, 145.03)
     if 'user_id' not in session:
         return redirect(url_for('login'))
     user = User.query.get(session['user_id'])
@@ -204,9 +212,11 @@ def dashboard():
                            temp=temp, 
                            condition=condition, 
                            efficiency=efficiency,
-                           output=output,)
+                           output=output,
+                           co2Saved=co2Saved,
+                           uptimePercentage=uptimePercentage,)
 
-# Settings page
+# Settings page, shows user profile details and option to edit profile
 @app.route('/settings', methods=['GET', 'POST'])
 def settings():
     if 'user_id' not in session:
@@ -214,7 +224,7 @@ def settings():
     user = User.query.get(session['user_id']) # Fetch user from database
     return render_template('settings.html', user=user, name=user.name, file=user.file)
 
-# Edit profile page
+# Edit profile page, allows user to input and update name, email, password, and profile picture
 @app.route('/editprofile', methods=['GET', 'POST'])
 def editprofile():
     if 'user_id' not in session:
@@ -222,13 +232,11 @@ def editprofile():
 
     user = User.query.get(session['user_id'])
 
-    if request.method == 'POST': # Get form data
+    if request.method == 'POST':
         name = request.form.get('name')
         email = request.form.get('email') 
         password = request.form.get('password')
         photo = request.files.get('file')
-
-        # If email changed, check if unique
         if email and email != user.email:
             if User.query.filter_by(email=email).first():
                 return "Email already in use", 400
@@ -237,7 +245,6 @@ def editprofile():
             user.name = name
         if password:
             user.password = generate_password_hash(password)
-        # Handle profile picture upload
         if photo:
             filename = secure_filename(photo.filename)
             photo.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
@@ -248,11 +255,11 @@ def editprofile():
 
     return render_template('editprofile.html', user=user, name=user.name, email=user.email, file=user.file)
 
+# About page, shows solar panel details
 @app.route('/about')
 def about():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    # About page: shows solar panel details
     details = {
         'version': '1.0.0',
         'serial_number': 'SP-20250928-001',
@@ -260,11 +267,11 @@ def about():
     }
     return render_template('about.html', details=details)
 
+# Contact page, shows support contact info
 @app.route('/contact')
 def contact():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    # Contact page: shows support contact info
     details = {
         'website': 'solarpanelsolutions.com',
         'email': 'support@solarpanelsolutions.com',
@@ -272,6 +279,7 @@ def contact():
     }
     return render_template('contact.html', details=details)
 
+# Runs the app
 if __name__ == '__main__':
     app.run(debug=True)
-    # Run the Flask app
+
