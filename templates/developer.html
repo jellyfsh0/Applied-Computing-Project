@@ -1,3 +1,9 @@
+<!--
+  Author: Ashish Shiju, Samuel Yu, Jayden Park
+  Page: Developer Mode
+  Purpose: Allow developer to set efficiency and other variables for testing
+  Date of creation: October 12, 2025
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,6 +12,7 @@
   <title>Developer Mode</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
 </head>
 <body>
   <div class="edit-profile" name="editProfile">
@@ -15,22 +22,19 @@
       </button>
     </div>
     <h2>Developer Options</h2>
+    <!-- Developer form fields for testing variables -->
     <form method="POST">
       <div class="form-group">
-        <label for="name">Name</label>
-        <input type="text" name="name" placeholder="Enter your new name" value="{{ name }}">
+        <label for="efficiency">Set Efficiency (%)</label>
+        <input type="number" name="efficiency" placeholder="e.g. 80">
       </div>
       <div class="form-group">
-        <label for="email">Email</label>
-        <input type="email" name="email" placeholder="Enter your new email" value="{{ email }}">
-      </div>
-      <div class="form-group">
-        <label for="password">Password</label>
-        <input type="password" name="password" placeholder="Enter your new password">
-      </div>
-      <div class="form-group">
-        <label for="file">Profile Picture (max 16MB)</label>
-        <input type="file" name="file" accept=".jpg, .jpeg, .png">
+        <label for="systemHealth">Set System Health</label>
+        <select name="systemHealth">
+          <option value="Good">Good</option>
+          <option value="Warning">Warning</option>
+          <option value="Critical">Critical</option>
+        </select>
       </div>
       <button type="submit" class="save-btn">Save Changes</button>
     </form>

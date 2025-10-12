@@ -1,3 +1,9 @@
+
+# Author: Ashish Shiju, Samuel Yu, Jayden Park
+# Page: app.py
+# Purpose: Main Flask application for Solar Dashboard
+# Date of creation: October 12, 2025
+
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -24,8 +30,12 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 # Initialize database
 db = SQLAlchemy(app)
 
-# Function to find weather data from Open-Meteo API and calculates solar panel output, efficiency, etc.
-def get_weather(latitude, longitude, panel_area=1.6, panel_efficiency=0.20):
+
+# Function: getWeather
+# Inputs: latitude (float), longitude (float), panelArea (float), panelEfficiency (float), errorChance (float, optional)
+# Process: Fetches weather data from Open-Meteo API, calculates solar panel output, efficiency (with random error), CO2 saved, uptime, and system health.
+# Outputs: temperature, condition, efficiency, output, co2Saved, uptime, systemHealth
+def getWeather(latitude, longitude, panelArea=1.6, panelEfficiency=0.20, errorChance=0.15):
     url = "https://api.open-meteo.com/v1/forecast"
     params = {
         "latitude": latitude,
@@ -34,18 +44,17 @@ def get_weather(latitude, longitude, panel_area=1.6, panel_efficiency=0.20):
         "timezone": "auto"
     }
 
+    # Get weather data from API
     response = requests.get(url, params=params)
     data = response.json()
-
-    # Get weather data
     current = data.get("current", {})
     temperature = current.get('temperature_2m')
-    weather_code = current.get('weather_code')
+    weatherCode = current.get('weather_code')
     timenow = current.get('time')
     time = datetime.fromisoformat(str(timenow))
 
-    # Weather codes
-    weather_codes = {
+    # Weather code mapping
+    weatherCodes = {
         0: "Clear sky",
         1: "Mainly clear",
         2: "Partly cloudy",
@@ -65,61 +74,54 @@ def get_weather(latitude, longitude, panel_area=1.6, panel_efficiency=0.20):
         96: "Thunderstorm with slight hail",
         99: "Thunderstorm with heavy hail"
     }
-
-    condition = weather_codes.get(weather_code, "Unknown")
-    max_output = 4000
+    condition = weatherCodes.get(weatherCode, "Unknown")
+    maxOutput = 4000
     hour = time.hour
 
+    # Calculate time factor for output
     if 6 <= hour <= 18:
-        time_factor = max(0, 1 - ((hour - 12) ** 2) / 49)
+        timeFactor = max(0, 1 - ((hour - 12) ** 2) / 49)
     else:
-        time_factor = 0
+        timeFactor = 0
 
-    weather_factors = {
-        0: 1.0,   
-        1: 0.9,   
-        2: 0.7,   
-        3: 0.5,  
-        45: 0.3,  
-        48: 0.3,  
-        51: 0.6,  
-        53: 0.5,
-        55: 0.4,  
-        61: 0.5,  
-        63: 0.4,  
-        65: 0.3,  
-        66: 0.3,
-        67: 0.2,
-        71: 0.4,  
-        73: 0.3,  
-        75: 0.2, 
-        77: 0.2,
-        80: 0.5,
-        81: 0.4,
-        82: 0.3,
-        85: 0.3,
-        86: 0.2,
-        95: 0.2,
-        96: 0.15,  
-        99: 0.1,   
+    # Weather factors for output
+    weatherFactors = {
+        0: 1.0,   1: 0.9,   2: 0.7,   3: 0.5,  45: 0.3,  48: 0.3,  51: 0.6,  53: 0.5,
+        55: 0.4,  61: 0.5,  63: 0.4,  65: 0.3,  66: 0.3,  67: 0.2,  71: 0.4,  73: 0.3,
+        75: 0.2,  77: 0.2,  80: 0.5,  81: 0.4,  82: 0.3,  85: 0.3,  86: 0.2,  95: 0.2,
+        96: 0.15,  99: 0.1,
     }
-    weather_factor = weather_factors.get(weather_code, 1.0)
+    weatherFactor = weatherFactors.get(weatherCode, 1.0)
     noise = random.uniform(0.95, 1.05)
-    output = max_output * time_factor * weather_factor * noise
-    irradiance = 2000 * time_factor * weather_factor
+    output = maxOutput * timeFactor * weatherFactor * noise
+    irradiance = 2000 * timeFactor * weatherFactor
 
+    # Calculate theoretical power and efficiency
     if irradiance and irradiance > 0:
-        theoretical_power = irradiance * panel_area * panel_efficiency
-        efficiency = (output / theoretical_power) * 100
+        theoreticalPower = irradiance * panelArea * panelEfficiency
+        efficiency = (output / theoreticalPower) * 100
         efficiency = min(efficiency, 100)
     else:
         efficiency = 0
 
-    co2_saved = (output / 1000) * 0.85
+    # Add random error to efficiency for notification testing
+    if random.random() < errorChance:
+        efficiency = max(0, efficiency - random.uniform(10, 30))
 
+    co2Saved = (output / 1000) * 0.85
     uptime = "Active" if output > 10 else "Idle"
 
-    return temperature, condition, efficiency, int(output), int(co2_saved), uptime
+    # Logic-based system health
+    if efficiency >= 70:
+        systemHealth = "Good"
+    elif efficiency >= 40:
+        systemHealth = "Warning"
+    elif uptime == "Idle":
+        systemHealth = "N/A"
+    else:
+        systemHealth = "Critical"
+
+    return temperature, condition, efficiency, int(output), int(co2Saved), uptime, systemHealth
 
 
 # Database model for User
@@ -200,29 +202,78 @@ def logout():
 def handle_file_too_large(error):
     return "File is too large!", 413
 
+
+
 # Dashboard page, shows weather data and solar panel output, efficiency, etc.
 @app.route('/dashboard')
 def dashboard():
-    temp, condition, efficiency, output, co2Saved, uptimePercentage = get_weather(-37.75, 145.03)
+    #  Check if user is logged in
     if 'user_id' not in session:
         return redirect(url_for('login'))
+
+    #  Get user info from database
     user = User.query.get(session['user_id'])
-    return render_template('dashboard.html', 
-                           name=user.name, 
-                           temp=temp, 
-                           condition=condition, 
-                           efficiency=efficiency,
-                           output=output,
-                           co2Saved=co2Saved,
-                           uptimePercentage=uptimePercentage,)
+    name = user.name if user else 'User'
+
+    #  Get weather and solar data
+    temp, condition, efficiency, output, co2Saved, uptime, systemHealth = getWeather(-37.75, 145.03)
+
+    #  If developer values are set in session, override them
+    dev_eff = session.get('dev_efficiency')
+    dev_health = session.get('dev_systemHealth')
+    if dev_eff is not None and dev_eff != '':
+        try:
+            efficiency = int(dev_eff)
+        except Exception:
+            pass
+    if dev_health:
+        systemHealth = dev_health
+
+    #  Show notification if efficiency is too low
+    showNotification = efficiency < 50
+
+    return render_template(
+        'dashboard.html',
+        name=name,
+        temp=temp,
+        condition=condition,
+        efficiency=int(efficiency),
+        output=output,
+        co2Saved=co2Saved,
+        uptime=uptime,
+        systemHealth=systemHealth,
+        showNotification=showNotification
+    )
+
 
 # Settings page, shows user profile details and option to edit profile
 @app.route('/settings', methods=['GET', 'POST'])
 def settings():
+    #  Check if user is logged in
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    user = User.query.get(session['user_id']) # Fetch user from database
-    return render_template('settings.html', user=user, name=user.name, file=user.file)
+    #  Get user info
+    user = User.query.get(session['user_id'])
+    name = user.name if user else 'User'
+    #  Render settings page with developer mode button
+    return render_template('settings.html', name=name, user=user)
+
+
+# Developer mode page, allows changing variables for testing
+@app.route('/developer', methods=['GET', 'POST'])
+def developer():
+    #  Check if user is logged in
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    user = User.query.get(session['user_id'])
+    name = user.name if user else 'User'
+    email = user.email if user else ''
+    #  Handle form submission to set test variables (store in session)
+    if request.method == 'POST':
+        session['dev_efficiency'] = request.form.get('efficiency', '')
+        session['dev_systemHealth'] = request.form.get('systemHealth', '')
+        return redirect(url_for('dashboard'))
+    return render_template('developer.html', name=name, email=email)
 
 # Edit profile page, allows user to input and update name, email, password, and profile picture
 @app.route('/editprofile', methods=['GET', 'POST'])

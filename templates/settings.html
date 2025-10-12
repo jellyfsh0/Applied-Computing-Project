@@ -1,3 +1,9 @@
+<!--
+  Author: Ashish Shiju, Samuel Yu, Jayden Park
+  Page: Settings
+  Purpose: Show user profile and allow navigation to edit your profile, show contact details, find the version of the software, and enter developer mode
+  Date of creation: October 12, 2025
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,6 +12,7 @@
   <title>Settings</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
 </head>
 <body>
   <div class="profile" id="profile">
@@ -16,10 +23,12 @@
     </div>
     <div class="profile-pic" style="background-image: url({{ url_for('static', filename='uploads/' + user.file) }});"></div>
     <h2>{{name}}</h2>
+    <!-- Profile sections for navigation -->
     <div class="profile-sections">
       <div class="section" onclick="window.location.href='{{ url_for('editprofile') }}'">Edit Profile</div>
       <div class="section" onclick="window.location.href='{{ url_for('contact') }}'">Contact Us</div>
       <div class="section" onclick="window.location.href='{{ url_for('about') }}'">About</div>
+      <div class="section" onclick="window.location.href='{{ url_for('developer') }}'">Developer Mode</div>
       <div class="section" onclick="window.location.href='{{ url_for('logout') }}'">Log Out</div>
     </div>
   </div>

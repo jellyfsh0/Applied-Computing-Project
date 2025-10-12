@@ -1,3 +1,9 @@
+<!--
+  Author: Ashish Shiju, Samuel Yu, Jayden Park
+  Page: Dashboard
+  Purpose: Display weather, output, efficiency, and system health
+  Date of creation: October 12, 2025
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,30 +24,47 @@
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.14,12.94a7.07,7.07,0,0,0,.05-.94,7.07,7.07,0,0,0-.05-.94l2.11-1.65a.48.48,0,0,0,.11-.61l-2-3.46a.5.5,0,0,0-.6-.22l-2.49,1a6.89,6.89,0,0,0-1.63-.94l-.38-2.65A.49.49,0,0,0,13.74,2h-3.5a.49.49,0,0,0-.49.42l-.38,2.65a6.89,6.89,0,0,0-1.63.94l-2.49-1a.5.5,0,0,0-.6.22l-2,3.46a.48.48,0,0,0,.11.61L4.86,11.06a7.07,7.07,0,0,0-.05.94,7.07,7.07,0,0,0,.05.94L2.75,14.59a.48.48,0,0,0-.11.61l2,3.46a.5.5,0,0,0,.6.22l2.49-1a6.89,6.89,0,0,0,1.63.94l.38,2.65a.49.49,0,0,0,.49.42h3.5a.49.49,0,0,0,.49-.42l.38-2.65a6.89,6.89,0,0,0,1.63-.94l2.49,1a.5.5,0,0,0,.6-.22l2-3.46a.48.48,0,0,0-.11-.61Z"/></svg>
       </button>
     </div>
+    <!-- Efficiency display and progress bar -->
     <div class="efficiency">
       <h2>{{efficiency}}% efficiency</h2>
       <div class="progress">
         <div class="progress-bar" style="width: {{efficiency}}%;"></div>
       </div>
     </div>
+    <!-- Tiles for output, health, status, and carbon saved -->
     <div class="tiles">
       <div class="tile">
         <span>Current Output</span>
         <div class="tile-value">{{output}} W</div>
       </div>
       <div class="tile">
-        <span>Total energy production</span>
-        <div class="tile-value">100 kWh</div>
+        <span>System Health</span>
+        <div class="tile-value">{{systemHealth}}</div>
       </div>
       <div class="tile">
         <span>Status</span>
-        <div class="tile-value">{{uptimePercentage}}</div>
+        <div class="tile-value">{{uptime}}</div>
       </div>
       <div class="tile">
         <span>Carbon saved</span>
-        <div class="tile-value">{{co2Saved}} kt</div>
+        <div class="tile-value">{{co2Saved}} g</div>
       </div>
     </div>
+    {% if showNotification %}
+    <!-- Show desktop notification if efficiency is too low -->
+    <script>
+      if (Notification && Notification.permission !== "denied") {
+        Notification.requestPermission().then(function (permission) {
+          if (permission === "granted") {
+            new Notification("Efficiency Alert", {
+              body: "Warning: Solar panel efficiency is too low!",
+              icon: "https://cdn-icons-png.flaticon.com/512/1828/1828843.png"
+            });
+          }
+        });
+      }
+    </script>
+    {% endif %}
   </div>
 </body>
 </html>
