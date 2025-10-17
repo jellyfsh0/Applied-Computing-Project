@@ -19,6 +19,9 @@ UPLOAD_FOLDER = 'static/uploads'
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
+# Initialize database
+db = SQLAlchemy()
+
 # Initialize Flask app and configuration
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres.kzmlonrkrgyaxxlkulpj:j5hsuLTIHB638q2v@aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres'
@@ -27,9 +30,7 @@ app.config['SECRET_KEY'] = 'supersecretkey'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
-# Initialize database
-db = SQLAlchemy(app)
-
+db.init_app(app)
 
 # Function: getWeather
 # Inputs: latitude (float), longitude (float), panelArea (float), panelEfficiency (float), errorChance (float, optional)
@@ -333,6 +334,7 @@ def contact():
 # Runs the app
 if __name__ == '__main__':
     app.run(debug=True)
+
 
 
 
