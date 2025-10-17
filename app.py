@@ -21,7 +21,10 @@ if not os.path.exists(UPLOAD_FOLDER):
 
 # Initialize Flask app and configuration
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///solar.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = (
+    'postgresql+psycopg2://postgres:superdupersafe123@'
+    'db.kzmlonrkrgyaxxlkulpj.supabase.co:5432/postgres?sslmode=require'
+)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'supersecretkey'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
